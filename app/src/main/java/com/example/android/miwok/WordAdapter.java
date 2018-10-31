@@ -2,6 +2,7 @@ package com.example.android.miwok;
 
 import android.arch.lifecycle.Lifecycle;
 import android.content.Context;
+import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.support.annotation.NonNull;
@@ -20,10 +21,47 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 public class WordAdapter extends RecyclerView.Adapter<WordAdapter.MyViewHolder> {
     private int mColourResourceId;
     private MediaPlayer mediaPlayer;
+
+    AudioManager.OnAudioFocusChangeListener afChangeListener =
+            new AudioManager.OnAudioFocusChangeListener() {
+                public void onAudioFocusChange(int focusChange) {
+                    if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+                        if (mediaPlayer != null) {
+                            mediaPlayer.pause();
+                            mediaPlayer.seekTo(0);
+                        }
+                    }
+                    else if (focusChange == AudioManager.AUDIOFOCUS_GAIN){
+                        mediaPlayer.start();
+                    }
+                    else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT){
+                        if (mediaPlayer != null) {
+                            mediaPlayer.pause();
+                            mediaPlayer.seekTo(mediaPlayer.getCurrentPosition());
+                        }
+                    }
+                    else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK){
+                        if (mediaPlayer != null) {
+                            mediaPlayer.pause();
+                            mediaPlayer.seekTo(mediaPlayer.getCurrentPosition());
+                        }
+
+                    }
+                }
+            };
+
+
+    final AudioFocusRequest mFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+            .setAcceptsDelayedFocusGain(true)
+            .setOnAudioFocusChangeListener(afChangeListener)
+            .setWillPauseWhenDucked(true)
+            .setFocusGain(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+            .build();
 
     private ArrayList<Word> mWords;
     public static class MyViewHolder extends RecyclerView.ViewHolder {
@@ -62,24 +100,28 @@ public class WordAdapter extends RecyclerView.Adapter<WordAdapter.MyViewHolder> 
         holder.listItemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                AudioManager mAudioFocus = (AudioManager) v.getContext().getSystemService(Context.AUDIO_SERVICE);
-                int res
+                Log.v("WordAdapter",currentWord.toString());
+                // Releasing previous mediaPlayer before creating new ones to avoid memory leaks
                 if (mediaPlayer != null) {
                     mediaPlayer.release();
                     Log.v("WordAdapter", "Releasing mediaPlayer object");
                     Log.v("WordAdapter", "Current word: " + currentWord);
                 }
 
-                mediaPlayer = MediaPlayer.create(v.getContext(), currentWord.getMusicResourceId());
-
-                mediaPlayer.start();
-                mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                    @Override
-                    public void onCompletion(MediaPlayer mp) {
-                        mp.release();
-                        Log.v("WordAdapter", "Releasing mediaPlayer object after finishing playing");
-                    }
-                });
+                final AudioManager mAudioManager = (AudioManager) v.getContext().getSystemService(Context.AUDIO_SERVICE);
+                int res = mAudioManager.requestAudioFocus(mFocusRequest);
+                if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                    mediaPlayer = MediaPlayer.create(v.getContext(), currentWord.getMusicResourceId());
+                    mediaPlayer.start();
+                    mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                        @Override
+                        public void onCompletion(MediaPlayer mp) {
+                            mAudioManager.abandonAudioFocusRequest(mFocusRequest);
+                            mp.release();
+                            Log.v("WordAdapter", "Releasing mediaPlayer object after finishing playing");
+                        }
+                    });
+                }
             }
         });
 
