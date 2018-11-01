@@ -1,16 +1,39 @@
 package com.example.android.miwok;
 
 import android.arch.lifecycle.Lifecycle;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.IntentSender;
+import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
+import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.database.DatabaseErrorHandler;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.UserHandle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,13 +43,19 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 public class WordAdapter extends RecyclerView.Adapter<WordAdapter.MyViewHolder> {
     private int mColourResourceId;
     private MediaPlayer mediaPlayer;
-
+    private AudioManager mAudioManager;
     AudioManager.OnAudioFocusChangeListener afChangeListener =
             new AudioManager.OnAudioFocusChangeListener() {
                 public void onAudioFocusChange(int focusChange) {
@@ -38,9 +67,12 @@ public class WordAdapter extends RecyclerView.Adapter<WordAdapter.MyViewHolder> 
                     }
                     else if (focusChange == AudioManager.AUDIOFOCUS_GAIN){
                         mediaPlayer.start();
+
                     }
                     else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT){
                         if (mediaPlayer != null) {
+                            Log.v("WordAdpater","Notified about audio focus LOSS");
+                            if (mediaPlayer.isPlaying()) {Log.v("WordAdapter","mediaPlayer IS PLAYING");}
                             mediaPlayer.pause();
                             mediaPlayer.seekTo(mediaPlayer.getCurrentPosition());
                         }
@@ -108,9 +140,10 @@ public class WordAdapter extends RecyclerView.Adapter<WordAdapter.MyViewHolder> 
                     Log.v("WordAdapter", "Current word: " + currentWord);
                 }
 
-                final AudioManager mAudioManager = (AudioManager) v.getContext().getSystemService(Context.AUDIO_SERVICE);
+
                 int res = mAudioManager.requestAudioFocus(mFocusRequest);
                 if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                    Log.v("WordAdapter","Audio focus GRANTED");
                     mediaPlayer = MediaPlayer.create(v.getContext(), currentWord.getMusicResourceId());
                     mediaPlayer.start();
                     mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -133,7 +166,7 @@ public class WordAdapter extends RecyclerView.Adapter<WordAdapter.MyViewHolder> 
         super();
         mWords = words;
         mColourResourceId = colourResourceId;
-
+        mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
     }
     public int getItemCount(){
         return mWords.size();
@@ -142,6 +175,8 @@ public class WordAdapter extends RecyclerView.Adapter<WordAdapter.MyViewHolder> 
 
     public void releaseMediaPlayer(){
         if (mediaPlayer != null) {
+            mAudioManager.abandonAudioFocusRequest(mFocusRequest);
+            Log.v("WordAdapter","Releasing mediaPlayer because of activity exit");
             mediaPlayer.release();
         }
     }
