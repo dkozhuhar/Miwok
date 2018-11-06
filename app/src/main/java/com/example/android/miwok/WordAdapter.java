@@ -60,29 +60,16 @@ public class WordAdapter extends RecyclerView.Adapter<WordAdapter.MyViewHolder> 
             new AudioManager.OnAudioFocusChangeListener() {
                 public void onAudioFocusChange(int focusChange) {
                     if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
-                        if (mediaPlayer != null) {
-                            mediaPlayer.pause();
-                            mediaPlayer.seekTo(0);
-                        }
+                        mAudioManager.abandonAudioFocusRequest(mFocusRequest);
+                        mediaPlayer.release();
                     }
                     else if (focusChange == AudioManager.AUDIOFOCUS_GAIN){
                         mediaPlayer.start();
-
                     }
-                    else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT){
-                        if (mediaPlayer != null) {
-                            Log.v("WordAdpater","Notified about audio focus LOSS");
-                            if (mediaPlayer.isPlaying()) {Log.v("WordAdapter","mediaPlayer IS PLAYING");}
-                            mediaPlayer.pause();
-                            mediaPlayer.seekTo(mediaPlayer.getCurrentPosition());
-                        }
-                    }
-                    else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK){
-                        if (mediaPlayer != null) {
-                            mediaPlayer.pause();
-                            mediaPlayer.seekTo(mediaPlayer.getCurrentPosition());
-                        }
-
+                    else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT || focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK){
+                        Log.v("WordAdpater","Notified about audio focus LOSS");
+                        mediaPlayer.pause();
+                        mediaPlayer.seekTo(0);
                     }
                 }
             };

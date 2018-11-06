@@ -13,7 +13,7 @@
         />
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:orientation="vertical"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="@dimen/list_item_height"
         android:gravity="center_vertical"
         android:id="@+id/text_layout"
@@ -36,4 +36,11 @@
             android:gravity="top"
             android:id="@+id/text_english"/>
     </LinearLayout>
+
+    <ImageView
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center_vertical"
+        android:layout_marginEnd="16dp"
+        android:src="@drawable/ic_baseline_play_arrow" />
 </LinearLayout>
