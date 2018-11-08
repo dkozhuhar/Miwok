@@ -29,6 +29,7 @@ import android.os.Looper;
 import android.os.UserHandle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.widget.RecyclerView;
@@ -84,19 +85,21 @@ public class WordAdapter extends RecyclerView.Adapter<WordAdapter.MyViewHolder> 
 
     private ArrayList<Word> mWords;
     public static class MyViewHolder extends RecyclerView.ViewHolder {
-        public LinearLayout listItemView;
-        public MyViewHolder(LinearLayout view) {
+        public ConstraintLayout listItemView;
+        public MyViewHolder(ConstraintLayout view) {
             super(view);
             listItemView = view;
         }
 
     }
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int integer){
-        LinearLayout listItemView = (LinearLayout)LayoutInflater.from(parent.getContext()).inflate(R.layout.list_view, parent, false);
+        ConstraintLayout listItemView = (ConstraintLayout)LayoutInflater.from(parent.getContext()).inflate(R.layout.list_view, parent, false);
         MyViewHolder vh = new MyViewHolder(listItemView);
-        LinearLayout textLayout = listItemView.findViewById(R.id.text_layout);
-        int color = ContextCompat.getColor(textLayout.getContext(),mColourResourceId);
-        textLayout.setBackgroundColor(color);
+        TextView textMiwok = listItemView.findViewById(R.id.text_miwok);
+        TextView textDefault = listItemView.findViewById(R.id.text_english);
+        int color = ContextCompat.getColor(listItemView.getContext(),mColourResourceId);
+        textMiwok.setBackgroundColor(color);
+        textDefault.setBackgroundColor(color);
         return vh;
     }
     public void onBindViewHolder(MyViewHolder holder, int position){
