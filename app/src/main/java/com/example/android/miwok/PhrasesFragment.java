@@ -6,6 +6,7 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,7 +40,7 @@ public class PhrasesFragment extends Fragment {
         words.add(new Word("I’m coming.","әәnәm", R.raw.phrase_im_coming));
         words.add(new Word("Let’s go.","yoowutis", R.raw.phrase_lets_go));
         words.add(new Word("Come here.","әnni'nem", R.raw.phrase_come_here));
-        //Log.v("PhrasesActivity","Resource id of image: " + ((Integer) words.get(0).getImageResourceId()).toString());
+
         itemsAdapter = new WordAdapter(this.getContext(), words, R.color.category_phrases);
         RecyclerView recyclerView = rootView.findViewById(R.id.list);
         recyclerView.setHasFixedSize(true);
@@ -55,5 +56,6 @@ public class PhrasesFragment extends Fragment {
     public void onStop() {
         super.onStop();
         itemsAdapter.releaseMediaPlayer();
+        Log.w("PhrasesFragment","onStop method called");
     }
 }
