@@ -15,11 +15,47 @@
  */
 package com.example.android.miwok;
 
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
 public class MainActivity extends AppCompatActivity {
+    public static MediaPlayer sharedMediaPlayer;
+    public static AudioManager mAudioManager;
+
+    private static AudioManager.OnAudioFocusChangeListener afChangeListener =
+            new AudioManager.OnAudioFocusChangeListener() {
+                public void onAudioFocusChange(int focusChange) {
+                    if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+                        mAudioManager.abandonAudioFocusRequest(mFocusRequest);
+                        MainActivity.sharedMediaPlayer.release();
+                    }
+                    else if (focusChange == AudioManager.AUDIOFOCUS_GAIN){
+                        MainActivity.sharedMediaPlayer.start();
+                    }
+                    else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT || focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK){
+                        Log.v("WordAdpater","Notified about audio focus LOSS");
+                        MainActivity.sharedMediaPlayer.pause();
+                        MainActivity.sharedMediaPlayer.seekTo(0);
+                    }
+                }
+            };
+
+
+
+
+    public final static AudioFocusRequest mFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+            .setAcceptsDelayedFocusGain(true)
+            .setOnAudioFocusChangeListener(afChangeListener)
+            .setWillPauseWhenDucked(true)
+            .setFocusGain(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+            .build();
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
